@@ -1,5 +1,6 @@
-import {Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn} from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Rol } from './rol_entity';
+import { Odontograma } from 'src/odontogramas/dto/odontograma_entity';
 
 @Entity('cliente')
 export class Cliente {
@@ -44,7 +45,7 @@ export class Cliente {
   @Column({ name: 'genero', length: 20, nullable: true })
   Genero?: string;
 
-  // 🔹 Relación con ROL
+  //  Relación con ROL
   @Column({ name: 'id_rol', nullable: true })
   IdRol?: number;
 
@@ -52,18 +53,21 @@ export class Cliente {
   @JoinColumn({ name: 'id_rol' })
   Rol?: Rol;
 
-  // 🔹 Campos de auditoría
+  //  Campos de auditoría
   @CreateDateColumn({ name: 'fecha_registro' })
   FechaRegistro: Date;
 
   @UpdateDateColumn({ name: 'ultimo_acceso', nullable: true })
   UltimoAcceso?: Date;
 
-  // 🔹 Estado del cliente
+  //  Estado del cliente
   @Column({ name: 'activo', default: true })
   Activo: boolean;
 
-  // 🔹 Eliminación lógica
+  //  Eliminación lógica
   @Column({ name: 'eliminado', default: false })
   Eliminado: boolean;
+
+  @OneToMany(() => Odontograma, odo => odo.cliente)
+  odontogramas: Odontograma[];
 }

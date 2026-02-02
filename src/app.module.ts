@@ -6,6 +6,10 @@ import { TratamientosModule } from './tratamientos/tratamientos.module';
 import { Tratamiento } from './tratamientos/dtos/tratamiento.entity';
 import { Especialidad } from './tratamientos/dtos/especialidad.entity';
 import { ClientesModule } from './clientes/clientes.module';
+import { OdontogramasModule } from './odontogramas/odontogramas.module';
+import { CitasModule } from './citas/citas.module';
+import { ComentariosClientesModule } from './comentarios-clientes/comentarios-clientes.module';
+import { PromocionesModule } from './promociones/promociones.module';
 
 
 
@@ -38,7 +42,7 @@ import { ClientesModule } from './clientes/clientes.module';
     GeminiModule, 
     ConfigModule.forRoot({
       isGlobal: true,
-    }), TratamientosModule
+    }), TratamientosModule, OdontogramasModule, CitasModule, ComentariosClientesModule, PromocionesModule
   ],
   controllers: [],
   providers: [],

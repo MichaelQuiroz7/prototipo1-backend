@@ -6,6 +6,7 @@ import { basicPromptStreamUseCase } from './uses-cases/promp-stream.uses-cases';
 import { BasicPromptImagenDto } from './Dtos/basic-prompt-Imagen.dto';
 import { ChatPromptDto } from './Dtos/chat-prompt.dto';
 import { chatPrompStreamUseCase } from './uses-cases/chat-promp-stream.uses-cases';
+import { chatPlanDentalUsesCases } from './uses-cases/chat-plan-dental.uses-cases';
 
 @Injectable()
 export class GeminiService {
@@ -24,7 +25,7 @@ export class GeminiService {
 
 
 
-   private chatHistory = new Map<String, Content[] >();
+   private chatHistory = new Map<String, Content[]>();
 
 
    async basicPrompt(basicPromptDto: BasicPromptDto) {
@@ -40,15 +41,20 @@ export class GeminiService {
       return chatPrompStreamUseCase(this.ai, chatPromptDto, { history: chatHistory });
    }
 
+   async chatPlanDental(chatPromptDto: ChatPromptDto) {
+      const chatHistory = this.getChatHsitory(chatPromptDto.chatId ?? 'default');
+      return chatPlanDentalUsesCases(this.ai, chatPromptDto, { history: chatHistory });
+   }
 
-   saveMessage(chatId: String, message: Content){
+
+   saveMessage(chatId: String, message: Content) {
       const messages = this.getChatHsitory(chatId);
       messages.push(message);
       this.chatHistory.set(chatId, messages);
    }
 
-   getChatHsitory(chatId: String){
-      return structuredClone( this.chatHistory.get(chatId) ?? [] );
+   getChatHsitory(chatId: String) {
+      return structuredClone(this.chatHistory.get(chatId) ?? []);
    }
 
 

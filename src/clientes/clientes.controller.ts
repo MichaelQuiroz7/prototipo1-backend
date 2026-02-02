@@ -1,17 +1,20 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UnauthorizedException, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 import { ClientesService } from './clientes.service';
 import { Cliente } from './dtoCliente/cliente_entity';
 import { Rol } from './dtoCliente/rol_entity';
 import { HttpService } from '@nestjs/axios';
-import { AuthService } from './auth/auth.service';
-import { lastValueFrom } from 'rxjs';
+import path, { extname } from 'path/win32';
+import * as fs from 'fs';
+
 
 @Controller('clientes')
 export class ClientesController {
   constructor(
     private readonly clienteService: ClientesService,
     private readonly httpService: HttpService,
-    private readonly authService: AuthService
+    //private readonly authService: AuthService
   ) { }
 
   // ================================================================
@@ -30,6 +33,12 @@ export class ClientesController {
     return this.clienteService.findAll();
   }
 
+  // Obtener todos los empleados
+  @Get('ObtenerEmpleados')
+  async findAllEmpleados(): Promise<Cliente[]> {
+    return this.clienteService.findAllEmpleados();
+  }
+
   // Obtener cliente por ID
   @Get('ObtenerCliente/:id')
   async findById(@Param('id', ParseIntPipe) id: number): Promise<Cliente> {
@@ -44,6 +53,35 @@ export class ClientesController {
   ): Promise<Cliente> {
     return this.clienteService.update(id, data);
   }
+
+  //actualizar foto de perfil
+  @Patch('ActualizarFotoPerfil/:id')
+  @UseInterceptors(
+    FileInterceptor('fotoPerfil', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const dir = './recursos/clientes';
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          cb(null, dir);
+        },
+        filename: (req, file, cb) => {
+          const id = req.params.id;
+          const extension = extname(file.originalname);
+          cb(null, `cliente-${id}${extension}`);
+        },
+      }),
+    }),
+  )
+  async updateFotoPerfil(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<{ message: string }> {
+    await this.clienteService.updateFotoPerfil(id, file);
+    return { message: 'Foto de perfil actualizada correctamente' };
+  }
+
 
   // Eliminar lógico
   @Delete('EliminarCliente/:id')
@@ -110,26 +148,66 @@ export class ClientesController {
     return this.clienteService.deleteRol(id);
   }
 
-  @Post('auth/google')
-  async loginWithGoogle(@Body() body) {
-    const { token } = body;
+  // @Post('auth/google')
+  // async loginWithGoogle(@Body() body) {
+  //   const { token } = body;
 
-    try {
-      // Verificar token con Google usando lastValueFrom
-      const response = await lastValueFrom(
-        this.httpService.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`)
-      );
+  //   try {
+  //     // Verificar token con Google usando lastValueFrom
+  //     const response = await lastValueFrom(
+  //       this.httpService.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`)
+  //     );
 
-      const data = response.data;
+  //     const data = response.data;
 
-      //Registrar o loguear el usuario
-      return this.authService.registerOrLoginGoogle(data);
+  //     //Registrar o loguear el usuario
+  //     return this.authService.registerOrLoginGoogle(data);
 
-    } catch (error) {
-      console.error('Error al verificar token de Google:', error.message);
-      throw new Error('Token de Google inválido o expirado.');
+  //   } catch (error) {
+  //     console.error('Error al verificar token de Google:', error.message);
+  //     throw new Error('Token de Google inválido o expirado.');
+  //   }
+  // }
+  /////////////////////////////////////////////////////////////////
+  /////////no aplica///////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////
+  @Get('accionistas/json')
+  getAccionistasJson() {
+    const filePath = path.join(
+      process.cwd(),
+      'recursos',
+      'accionistas',
+      'accionistas.json',
+    );
+
+    if (!fs.existsSync(filePath)) {
+      return {
+        error: true,
+        message: 'Archivo JSON no encontrado',
+      };
     }
+
+    const data = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(data);
   }
 
+  // ==========================
+  // DEPOSITOS
+  // ==========================
+  @Get('depositos/json')
+  getDepositosJson() {
+    const filePath = path.join(
+      process.cwd(),
+      'recursos',
+      'accionistas',
+      'depositos.json',
+    );
+
+    if (!fs.existsSync(filePath)) {
+      return { error: true, message: 'Archivo depositos.json no encontrado' };
+    }
+
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  }
 
 }

@@ -101,6 +101,41 @@ export class GeminiController {
 
   }
 
+  @Post('chat-plan-dental')
+@UseInterceptors(FilesInterceptor('files'))
+async chatPlanDental(
+  @Body() chatPromptDto: ChatPromptDto,
+  @Res() res: express.Response,
+  @UploadedFiles() files: Array<Express.Multer.File>,
+) {
+
+  chatPromptDto.files = files;
+
+  const data = await this.geminiService.chatPlanDental(chatPromptDto);
+
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.status(HttpStatus.OK).send(data);
+
+  // Guardar historial
+  const geminiMessage = {
+    role: 'model',
+    parts: [{ text: data }],
+  };
+
+  const userMessage = {
+    role: 'user',
+    parts: [{ text: chatPromptDto.prompt }],
+  };
+
+
+
+  this.geminiService.saveMessage(chatPromptDto.chatId ?? 'default', userMessage);
+  this.geminiService.saveMessage(chatPromptDto.chatId ?? 'default', geminiMessage);
+  console.log(data);
+  return data;
+}
+
+
 
 
   @Get('chat-history/:chatId')

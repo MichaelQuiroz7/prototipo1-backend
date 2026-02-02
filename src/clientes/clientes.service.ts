@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Cliente } from './dtoCliente/cliente_entity';
-import { Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Rol } from './dtoCliente/rol_entity';
 
 @Injectable()
 export class ClientesService {
+
   constructor(
     @InjectRepository(Cliente)
     private readonly clienteRepository: Repository<Cliente>,
@@ -34,22 +35,48 @@ export class ClientesService {
       }
     }
 
+    // Crear cliente en la BD
     const nuevo = this.clienteRepository.create({
       ...data,
       Rol: rol ?? undefined,
     });
 
-    return this.clienteRepository.save(nuevo);
+    const clienteGuardado = await this.clienteRepository.save(nuevo);
+
+    // =====================================================
+    //  EJECUTAR FUNCIÓN crear_odontograma_inicial()
+    // =====================================================
+    await this.clienteRepository.query(
+      `SELECT crear_odontograma_inicial($1);`,
+      [clienteGuardado.IdCliente],
+    );
+
+    return clienteGuardado;
   }
+
+
+
 
   // Obtener todos los clientes (solo no eliminados)
   async findAll(): Promise<Cliente[]> {
     return this.clienteRepository.find({
-      where: { Eliminado: false },
+      where: { Eliminado: false, IdRol: 3 },
       relations: ['Rol'],
       order: { IdCliente: 'ASC' },
     });
   }
+
+  // Obtener todos los empleados
+async findAllEmpleados(): Promise<Cliente[]> {
+  return this.clienteRepository.find({
+    where: {
+      Eliminado: false,
+      IdRol: Not(In([1, 3])),
+    },
+    relations: ['Rol'],
+    order: { IdCliente: 'ASC' },
+  });
+}
 
   // Obtener cliente por ID
   async findById(id: number): Promise<Cliente> {
@@ -87,6 +114,31 @@ export class ClientesService {
     return this.clienteRepository.save(cliente);
   }
 
+
+  //Actualizar foto de perfil
+  async updateFotoPerfil(
+    id: number,
+    file: Express.Multer.File,
+  ): Promise<void> {
+    if (!file) {
+      throw new BadRequestException('No se envió ningún archivo');
+    }
+
+    const cliente = await this.clienteRepository.findOne({
+      where: { IdCliente: id, Eliminado: false },
+    });
+
+    if (!cliente) {
+      throw new NotFoundException(`Cliente con ID ${id} no encontrado`);
+    }
+
+    // 🔹 Guardar ruta relativa en BD
+    cliente.FotoPerfil = `/recursos/clientes/${file.filename}`;
+
+    await this.clienteRepository.save(cliente);
+  }
+
+
   // Eliminar (lógico)
   async delete(id: number): Promise<void> {
     const cliente = await this.findById(id);
@@ -105,10 +157,10 @@ export class ClientesService {
     return this.clienteRepository.findOne({ where: { Correo: correo } });
   }
 
-   /**
-   * Valida correo y contraseña 
-   * Retorna el cliente si son correctos, o lanza excepción si no lo son
-   */
+  /**
+  * Valida correo y contraseña 
+  * Retorna el cliente si son correctos, o lanza excepción si no lo son
+  */
   async loginLocal(correo: string, password: string): Promise<Cliente> {
     const cliente = await this.findByEmail(correo);
 
@@ -184,5 +236,9 @@ export class ClientesService {
     rol.Eliminado = true;
     await this.rolRepository.save(rol);
   }
+}
+
+function isNot(arg0: number, arg1: number): number | import("typeorm").FindOperator<number> | undefined {
+  throw new Error('Function not implemented.');
 }
 
