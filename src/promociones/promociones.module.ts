@@ -9,5 +9,6 @@ import { HttpModule } from '@nestjs/axios';
   imports: [ TypeOrmModule.forFeature([Promocion, UpdatePromocionDto, CreatePromocionDto]),HttpModule ],
   controllers: [PromocionesController],
   providers: [PromocionesService],
+  exports: [PromocionesService],
 })
 export class PromocionesModule {}

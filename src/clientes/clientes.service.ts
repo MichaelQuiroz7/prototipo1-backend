@@ -204,7 +204,7 @@ async findAllEmpleados(): Promise<Cliente[]> {
   // Obtener todos los roles (solo no eliminados)
   async findAllRoles(): Promise<Rol[]> {
     return this.rolRepository.find({
-      where: { Eliminado: false },
+      where: { Eliminado: false, IdRol: Not(In([1, 3])), },
       order: { IdRol: 'ASC' },
     });
   }

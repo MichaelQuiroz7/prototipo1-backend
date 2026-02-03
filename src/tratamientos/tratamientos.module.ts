@@ -10,6 +10,7 @@ import { Especialidad } from './dtos/especialidad.entity';
   imports: [TypeOrmModule.forFeature([Tratamiento, Especialidad])],
   controllers: [TratamientosController],
   providers: [TratamientosService],
+  exports: [TratamientosService],
   
 })
   export class TratamientosModule { }

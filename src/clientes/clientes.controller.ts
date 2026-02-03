@@ -210,4 +210,80 @@ export class ClientesController {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   }
 
+
+  // ==========================
+  // Semilogin
+  // ==========================
+
+  @Get('accionistas/email/:email')
+  getAccionistaByEmail(@Param('email') email: string) {
+    const filePath = path.join(
+      process.cwd(),
+      'recursos',
+      'accionistas',
+      'accionistas.json',
+    );
+
+    if (!fs.existsSync(filePath)) {
+      return {
+        error: true,
+        message: 'Archivo JSON no encontrado',
+      };
+    }
+
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    const accionista = data.find(
+      (a: any) => a.email.toLowerCase() === email.toLowerCase()
+    );
+
+    if (!accionista) {
+      return {
+        error: true,
+        message: 'Accionista no encontrado',
+      };
+    }
+    return accionista;
+  }
+
+
+  // ==========================
+// DEPOSITOS POR ACCIONISTA
+// ==========================
+@Get('depositos/accionista/:id')
+getDepositosByAccionista(@Param('id') id: string) {
+  const filePath = path.join(
+    process.cwd(),
+    'recursos',
+    'accionistas',
+    'depositos.json',
+  );
+
+  if (!fs.existsSync(filePath)) {
+    return {
+      error: true,
+      message: 'Archivo depositos.json no encontrado',
+    };
+  }
+
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  const idCliente = Number(id);
+
+  const depositos = data.filter(
+    (d: any) => d.idCliente === idCliente
+  );
+
+  if (depositos.length === 0) {
+    return {
+      error: true,
+      message: 'No se encontraron depósitos para este accionista',
+    };
+  }
+
+  return depositos;
+}
+
+
+
 }

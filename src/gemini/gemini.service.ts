@@ -7,13 +7,14 @@ import { BasicPromptImagenDto } from './Dtos/basic-prompt-Imagen.dto';
 import { ChatPromptDto } from './Dtos/chat-prompt.dto';
 import { chatPrompStreamUseCase } from './uses-cases/chat-promp-stream.uses-cases';
 import { chatPlanDentalUsesCases } from './uses-cases/chat-plan-dental.uses-cases';
+import { ChatContextService } from './ChatContextService';
 
 @Injectable()
 export class GeminiService {
 
    private ai: any;
 
-   constructor() {
+   constructor( private readonly chatContextService: ChatContextService,) {
       try {
          // Lazy init to capture possible errors and log them
          this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -36,10 +37,23 @@ export class GeminiService {
       return basicPromptStreamUseCase(this.ai, basicPromptDto);
    }
 
+   // async chatStream(chatPromptDto: ChatPromptDto) {
+   //    const chatHistory = this.getChatHsitory(chatPromptDto.chatId ?? 'default');
+   //    return chatPrompStreamUseCase(this.ai, chatPromptDto, { history: chatHistory });
+   // }
+
    async chatStream(chatPromptDto: ChatPromptDto) {
-      const chatHistory = this.getChatHsitory(chatPromptDto.chatId ?? 'default');
-      return chatPrompStreamUseCase(this.ai, chatPromptDto, { history: chatHistory });
-   }
+
+    const chatHistory = this.getChatHsitory(chatPromptDto.chatId ?? 'default');
+
+    
+    const contextoClinico = await this.chatContextService.obtenerContextoClinico();
+
+    return chatPrompStreamUseCase(this.ai, chatPromptDto, {
+      history: chatHistory,
+      contextoClinico: contextoClinico,
+    });
+  }
 
    async chatPlanDental(chatPromptDto: ChatPromptDto) {
       const chatHistory = this.getChatHsitory(chatPromptDto.chatId ?? 'default');
